@@ -1,0 +1,227 @@
+<html>
+    <head>
+        <script src="lib/tmlib.js"></script>
+        <script>
+
+var SCREEN_WIDTH    = 465;
+var SCREEN_HEIGHT   = 465;
+var SCREEN_CENTER_X = SCREEN_WIDTH/2;
+var SCREEN_CENTER_Y = SCREEN_HEIGHT/2;
+var ENEMY_POS_OFFSET= 90;
+var CRASH_STYLE_SHEET = null;
+
+var BACKGROUND_WIDTH = SCREEN_WIDTH;
+var BACKGROUND_HEIGHT= 2064 * SCREEN_WIDTH/320;
+
+tm.preload(function() {
+    tm.graphics.TextureManager.add("player", "https://raw.github.com/phi1618/tmlib.js/rsource0.1.0/resource/img/shooting/player00.png");
+    tm.graphics.TextureManager.add("enemy", "https://raw.github.com/phi1618/tmlib.js/rsource0.1.0/resource/img/shooting/enemy.png");
+    tm.graphics.TextureManager.add("crash", "http://jsrun.it/assets/q/4/L/I/q4LIU.png");
+    tm.graphics.TextureManager.add("background", "http://www.shoeisha.com/book/hp/shuchu/enchantsample/chapter04/background.png");
+
+    tm.sound.SoundManager.add("bgm", "bgm/Loop_35.wav", 1);
+    tm.sound.SoundManager.add("crash", "se/crash.wav");
+});
+
+tm.main(function() {
+    var app = tm.app.CanvasApp("#world");
+    app.resize(SCREEN_WIDTH, SCREEN_HEIGHT);
+    app.fitWindow();
+
+
+    CRASH_STYLE_SHEET = tm.app.SpriteSheet({
+        image: "crash",
+        frame: {
+            width: 64,
+            height: 64,
+            count: 64
+        },
+        animations: {
+            "crash": [0, 32, "crash"],
+            "hoge": [32, 0, "crash", 5],
+        }
+    });
+
+
+    app.replaceScene(GameScene());
+
+    app.run();
+});
+
+
+var GameScene = tm.createClass({
+    superClass: tm.app.Scene,
+
+    init: function() {
+        this.superInit();
+
+        var bgm = tm.sound.SoundManager.get("bgm");
+        bgm.loop = true;
+        bgm.play();
+
+        this.background = new tm.app.Sprite(BACKGROUND_WIDTH, BACKGROUND_HEIGHT, "background").addChildTo(this);
+        this.background.originX = 0;
+        this.background.originY = 0;
+        this.background.position.y = -this.background.height + SCREEN_HEIGHT;
+        this.background.update = function() {
+            this.y += 8;
+            if (this.y >= 0) {
+                this.position.y = -this.height + SCREEN_HEIGHT;
+            }
+        };
+
+        this.player = Player().addChildTo(this);
+        this.player.x = SCREEN_CENTER_X;
+        this.player.y = SCREEN_HEIGHT-100;
+
+    },
+
+    update: function(app) {
+        if (app.frame % 4 == 0) {
+            this.player.shot(app.currentScene);
+        }
+
+        if (app.frame % 60 == 0) {
+            for (var i=0; i<5; ++i) {
+                var enemy = Enemy().addChildTo(this);
+                var x = SCREEN_CENTER_X + ENEMY_POS_OFFSET*(i-2);
+//                enemy.x = tm.util.Random.randint(0, SCREEN_WIDTH);
+                enemy.x = x;
+                enemy.y = -100;
+            }
+        }
+
+        for (var i=0, len=Enemy.list.length; i<len; ++i) {
+            var enemy = Enemy.list[i];
+            if (enemy.life <= 0) continue ;
+
+            for (var j=0, len2=Bullet.list.length; j<len2; ++j) {
+                var bullet = Bullet.list[j];
+                if (bullet.destroy <= 0) continue ;
+                if (enemy.isHitElement(bullet)) {
+                    enemy.life -= bullet.power;
+                    bullet.life -= 1;
+                }
+            }
+       }
+    },
+
+    onpointingmove: function(e) {
+        var p = e.app.pointing;
+
+        this.player.x += p.deltaPosition.x;
+
+    }
+});
+
+
+var Player = tm.createClass({
+    superClass: tm.app.Sprite,
+
+    init: function() {
+        this.superInit(64, 64, "player");
+        this.level = 2;
+    },
+
+    update: function(app) {
+
+    },
+
+    shot: function(scene) {
+        switch (this.level) {
+            case 0 :
+                Bullet().addChildTo(this).addChildTo(scene).setPosition(this.x, this.y-20);
+                break;
+            case 1 :
+                Bullet().addChildTo(this).addChildTo(scene).setPosition(this.x-20, this.y-5);
+                Bullet().addChildTo(this).addChildTo(scene).setPosition(this.x+20, this.y-5);
+                break;
+            case 2 :
+                Bullet().addChildTo(this).addChildTo(scene).setPosition(this.x, this.y-20);
+                Bullet().addChildTo(this).addChildTo(scene).setPosition(this.x-20, this.y-5);
+                Bullet().addChildTo(this).addChildTo(scene).setPosition(this.x+20, this.y-5);
+                break;
+            default :
+                assert(false);
+                break;
+        }
+
+    }
+})
+
+var Bullet = tm.createClass({
+    superClass: tm.app.CircleShape,
+
+    init: function() {
+        this.superInit(12, 12, {
+            fillStyle: "#444",
+            lineWidth: 2,
+        });
+        Bullet.list.push(this);
+
+        this.power = 1;
+        this.life  = 1;
+    },
+    update: function() {
+        this.y -= 16;
+
+        if (this.y < 0 || this.life <= 0) {
+            this.remove();
+            Bullet.list.erase(this);
+        }
+    }
+});
+Bullet.list = [];
+
+
+var Enemy = tm.createClass({
+    superClass: tm.app.Sprite,
+
+    init: function() {
+        this.superInit(80, 80, "enemy");
+        Enemy.list.push(this);
+
+        this.life = 2;
+    },
+    update: function(app) {
+        this.y += 8;
+
+        if (this.y > SCREEN_HEIGHT+50 || this.life <= 0) {
+            this.remove();
+            Enemy.list.erase(this);
+
+            if (this.life <= 0) {
+                var crash = Crash();
+                crash.position.set(this.x, this.y);
+                crash.addChildTo(app.currentScene);
+                tm.sound.SoundManager.get("crash").play();
+            }
+        }
+    }
+});
+Enemy.list = [];
+
+var Crash = tm.createClass({
+    superClass: tm.app.AnimationSprite,
+
+    init: function() {
+        this.superInit(128, 128, CRASH_STYLE_SHEET);
+        this.gotoAndPlay("crash");
+        this.blendMode = "lighter";
+    },
+    update: function() {
+
+    },
+    onanimationend: function() {
+        this.remove();
+    }
+})
+
+
+
+        </script>
+    </head>
+    <body>
+        <canvas id="world"></canvas>
+    </body>
+</html>
