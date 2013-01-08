@@ -79,6 +79,15 @@ var GameScene = tm.createClass({
             }
         }
 
+        // プレイヤーと敵
+        for (var i=0, len=Enemy.list.length; i<len; ++i) {
+            var enemy = Enemy.list[i];
+            if (this.player.isHitElement(enemy)) {
+                app.end();
+                break;
+            }
+        }
+
         // プレイヤーとアイテム
         for (var i=0, len=Item.list.length; i<len; ++i) {
             var item = Item.list[i];
@@ -255,7 +264,7 @@ var Item = tm.createClass({
     superClass: tm.app.Shape,
 
     init: function() {
-        this.superInit(16, 16);
+        this.superInit(32, 32);
         this.v = tm.geom.Vector2.random(225, 315, 8);
         Item.list.push(this);
     },
@@ -306,8 +315,8 @@ var Star = tm.createClass({
         this.superInit();
 
         this.canvas.setTransformCenter();
-        this.canvas.setFillStyle("yellow").fillStar(0, 0, 6, 5);
-        this.canvas.setLineStyle(2).setStrokeStyle("white").strokeStar(0, 0, 6, 5);
+        this.canvas.setFillStyle("yellow").fillStar(0, 0, 15, 5);
+        this.canvas.setLineStyle(2).setStrokeStyle("white").strokeStar(0, 0, 15, 5);
     },
 
     giveEffect: function(player) {
