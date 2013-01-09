@@ -9,11 +9,13 @@ var SCREEN_CENTER_X = SCREEN_WIDTH/2;
 var SCREEN_CENTER_Y = SCREEN_HEIGHT/2;
 var PLAYER_LEVEL_MAX= 2;
 var PLAYER_SIZE     = 50;
-//var PLAYER_IMAGE    = null;
+var PLAYER_IMAGE    = null;
 var ENEMY_SIZE      = 80;
 var ENEMY_IMAGE     = null;
 var ENEMY_POS_OFFSET= 90;
-var CRASH_STYLE_SHEET = null;
+var BACKGROUND_WIDTH    = SCREEN_WIDTH;
+var BACKGROUND_HEIGHT   = SCREEN_HEIGHT*3;
+var BACKGROUND_IMAGE    = null;
 
 tm.preload(function() {
     PLAYER_IMAGE = tm.graphics.Canvas().resize(PLAYER_SIZE, PLAYER_SIZE).setTransformCenter()
@@ -23,6 +25,19 @@ tm.preload(function() {
     ENEMY_IMAGE = tm.graphics.Canvas().resize(ENEMY_SIZE, ENEMY_SIZE).setTransformCenter()
         .setColorStyle("white", "red").setLineStyle(4.0)
         .fillStar(0, 0, ENEMY_SIZE/2, 16, 0.6).strokeStar(0, 0, ENEMY_SIZE/2, 16, 0.6);
+
+    BACKGROUND_IMAGE = tm.graphics.Canvas();
+    BACKGROUND_IMAGE.resize(BACKGROUND_WIDTH, BACKGROUND_HEIGHT);
+    BACKGROUND_IMAGE.globalCompositeOperation = "lighter";
+    for (var i=0; i<100; ++i) {
+        var x = tm.util.Random.randint(0, BACKGROUND_WIDTH);
+        var y = tm.util.Random.randint(0, BACKGROUND_HEIGHT);
+        var scale = tm.util.Random.randint(4, 12);
+        var colorAngle = tm.util.Random.randint(0, 360);
+        BACKGROUND_IMAGE.fillStyle = "hsla({0}, 75%, 50%, 0.5)".format(colorAngle);
+        BACKGROUND_IMAGE.fillStar(x, y, scale, 4, 0.5);
+        BACKGROUND_IMAGE.fillStar(x, y, scale*0.5, 4, 0.5);
+    }
 
     tm.sound.SoundManager.add("bgm", "bgm/Loop_35.wav", 1);
     tm.sound.SoundManager.add("crash", "se/crash.wav");
@@ -51,9 +66,32 @@ var GameScene = tm.createClass({
         bgm.play();
         */
 
+        var background = tm.app.Sprite(BACKGROUND_WIDTH, BACKGROUND_HEIGHT, BACKGROUND_IMAGE);
+        background.originX = background.originY = 0.0;
+        background.addChildTo(this);
+        background.y = -background.height + SCREEN_HEIGHT;
+        background.update = function() {
+            this.y += 8;
+            if (this.y > SCREEN_HEIGHT) {
+               this.y = -this.height*2 + SCREEN_HEIGHT;
+            }
+        };
+
+        var background2 = tm.app.Sprite(BACKGROUND_WIDTH, BACKGROUND_HEIGHT, BACKGROUND_IMAGE);
+        background2.originX = background2.originY = 0.0;
+        background2.addChildTo(this);
+        background2.y = -background2.height*2 + SCREEN_HEIGHT;
+        background2.update = function() {
+            this.y += 8;
+            if (this.y > SCREEN_HEIGHT) {
+               this.y = -this.height + SCREEN_HEIGHT;
+            }
+        };
+
         this.player = Player().addChildTo(this);
         this.player.x = SCREEN_CENTER_X;
         this.player.y = SCREEN_HEIGHT-100;
+
 
     },
 
@@ -306,7 +344,6 @@ var Star = tm.createClass({
 
     giveEffect: function(player) {
         player.level = Math.min(player.level+1, PLAYER_LEVEL_MAX);
-        console.log(player.level);
     }
 });
 
