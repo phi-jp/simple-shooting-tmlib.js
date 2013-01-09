@@ -82,9 +82,14 @@ var GameScene = tm.createClass({
             bgStar.y = tm.util.Random.randint(0, SCREEN_HEIGHT);
         }
 
+        this.scoreLabel = tm.app.Label();
+        this.scoreLabel.align = "right";
+        this.scoreLabel.addChildTo(this).setPosition(SCREEN_WIDTH-10, 30);
+        this.scoreLabel.width = 200;
+
         this.player = Player().addChildTo(this);
         this.player.x = SCREEN_CENTER_X;
-        this.player.y = SCREEN_HEIGHT-100;
+        this.player.y = SCREEN_HEIGHT-80;
     },
 
     update: function(app) {
@@ -134,6 +139,8 @@ var GameScene = tm.createClass({
                 }
             }
        }
+
+       this.scoreLabel.text = app.frame + " km";
     },
 
     onpointingmove: function(e) {
