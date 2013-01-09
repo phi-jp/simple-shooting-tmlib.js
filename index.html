@@ -66,6 +66,7 @@ var GameScene = tm.createClass({
         bgm.play();
         */
 
+        /*
         var background = tm.app.Sprite(BACKGROUND_WIDTH, BACKGROUND_HEIGHT, BACKGROUND_IMAGE);
         background.originX = background.originY = 0.0;
         background.addChildTo(this);
@@ -76,17 +77,13 @@ var GameScene = tm.createClass({
                this.y = -this.height*2 + SCREEN_HEIGHT;
             }
         };
-
-        var background2 = tm.app.Sprite(BACKGROUND_WIDTH, BACKGROUND_HEIGHT, BACKGROUND_IMAGE);
-        background2.originX = background2.originY = 0.0;
-        background2.addChildTo(this);
-        background2.y = -background2.height*2 + SCREEN_HEIGHT;
-        background2.update = function() {
-            this.y += 8;
-            if (this.y > SCREEN_HEIGHT) {
-               this.y = -this.height + SCREEN_HEIGHT;
-            }
-        };
+        */
+        for (var i=0; i<32; ++i) {
+            var size = tm.util.Random.randint(8, 16);
+            var bgStar = BGStar(size).addChildTo(this);
+            bgStar.x = tm.util.Random.randint(0, SCREEN_WIDTH);
+            bgStar.y = tm.util.Random.randint(0, SCREEN_HEIGHT);
+        }
 
         this.player = Player().addChildTo(this);
         this.player.x = SCREEN_CENTER_X;
@@ -348,6 +345,35 @@ var Star = tm.createClass({
 });
 
 
+var BGStar = tm.createClass({
+    superClass: tm.app.Shape,
+
+    init: function(size) {
+        this.superInit(size, size);
+
+        this.canvas.globalCompositeOperation = "lighter";
+        var colorAngle = tm.util.Random.randint(0, 360);
+        this.canvas.fillStyle = "hsla({0}, 75%, 75%, 0.5)".format(colorAngle);
+        this.canvas.setTransformCenter();
+        this.canvas.fillStar(0, 0, size/2, 4, 0.5);
+        this.canvas.fillStar(0, 0, size/2*0.5, 4, 0.5);
+
+        this.speed = size/2;
+        this.offset = tm.util.Random.randint(0, 360);
+    },
+
+    update: function(app) {
+        this.y += this.speed;
+
+        this.alpha = (Math.sin(Math.degToRad((app.frame+this.offset)*10))+1)/2;
+
+        if (this.y > SCREEN_HEIGHT+20) {
+            this.y = -20;
+        }
+
+        this.time++;
+    }
+})
 
         </script>
     </head>
