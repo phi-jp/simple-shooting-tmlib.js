@@ -142,13 +142,6 @@ var GameScene = tm.createClass({
 
        this.scoreLabel.text = app.frame + " km";
     },
-
-    onpointingmove: function(e) {
-        var p = e.app.pointing;
-
-        this.player.x += p.deltaPosition.x;
-
-    }
 });
 
 
@@ -163,10 +156,25 @@ var Player = tm.createClass({
         });
 */
         this.level = 0;
+
+        this.move = this.moveByAccel;
     },
 
     update: function(app) {
+        this.move(app);
+    },
 
+    moveByMouse: function(app) {
+        var p = app.pointing;
+        if (p.getPointing()) {
+            this.x += p.deltaPosition.x*1.5;
+        }
+    },
+
+    moveByAccel: function(app) {
+        var a = app.accelerometer;
+        var gravity = a.gravity;
+        this.x += gravity.x;
     },
 
     shot: function(scene) {
