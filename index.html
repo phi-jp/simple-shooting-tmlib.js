@@ -174,7 +174,7 @@ var Player = tm.createClass({
     moveByAccel: function(app) {
         var a = app.accelerometer;
         var gravity = a.gravity;
-        this.x += gravity.x;
+        this.x += gravity.x*4;
     },
 
     shot: function(scene) {
